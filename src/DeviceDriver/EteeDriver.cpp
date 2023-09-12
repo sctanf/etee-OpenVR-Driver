@@ -54,12 +54,12 @@ vr::EVRInitError EteeDeviceDriver::Activate(uint32_t unObjectId) {
 
   vr::VRProperties()->SetInt32Property(m_props, vr::Prop_DeviceClass_Int32, (int32_t)vr::TrackedDeviceClass_Controller);
   vr::VRProperties()->SetBoolProperty(m_props, vr::Prop_Identifiable_Bool, true);
-  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis0Type_Int32, vr::k_eControllerAxis_TrackPad);
-  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis1Type_Int32, vr::k_eControllerAxis_Trigger);
+//  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis0Type_Int32, vr::k_eControllerAxis_TrackPad); // Overridden
+//  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis1Type_Int32, vr::k_eControllerAxis_Trigger);
   vr::VRProperties()->SetInt32Property(
       m_props, vr::Prop_ControllerRoleHint_Int32, IsRightHand() ? vr::TrackedControllerRole_RightHand : vr::TrackedControllerRole_LeftHand);
   vr::VRProperties()->SetInt32Property(m_props, vr::Prop_ControllerHandSelectionPriority_Int32, (int32_t)7002);
-  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ModelNumber_String, IsRightHand() ? "etee right" : "etee left");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ModelNumber_String, IsRightHand() ? "etee right" : "etee left"); // Overridden
   vr::VRProperties()->SetStringProperty(
       m_props, vr::Prop_RenderModelName_String, IsRightHand() ? "{etee}/rendermodels/etee_controller_right" : "{etee}/rendermodels/etee_controller_left");
   vr::VRProperties()->SetStringProperty(
@@ -67,11 +67,24 @@ vr::EVRInitError EteeDeviceDriver::Activate(uint32_t unObjectId) {
       vr::Prop_ManufacturerName_String,
       "etee");  // anything other than TG0 (what the manufacturer of the tracker is, as we use this to get the pose)
   vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ResourceRoot_String, "etee_controller");
-  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_InputProfilePath_String, "{etee}/input/etee_controller_profile.json");
-  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis2Type_Int32, vr::k_eControllerAxis_Trigger);
-  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ControllerType_String, "etee_controller");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_InputProfilePath_String, "{etee}/input/etee_controller_profile.json"); // Overridden
+//  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis2Type_Int32, vr::k_eControllerAxis_Trigger);
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ControllerType_String, "etee_controller"); // Overridden
 
-  // Inputs | These interact without the specified input profile so the paths need to be equivalent
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_TrackingSystemName_String, "indexcontroller");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ManufacturerName_String, "Valve");
+  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ModelNumber_String, IsRightHand() ? "Knuckles (Right Controller)" : "Knuckles (Left Controller)");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_RenderModelName_String, IsRightHand() ? "{indexcontroller}valve_controller_knu_1_0_left" : "{indexcontroller}valve_controller_knu_1_0_right");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_SerialNumber_String, "ALVR Remote Controller");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_AttachedDeviceId_String, "ALVR Remote Controller");
+//  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_RegisteredDeviceType_String, IsRightHand() ? "valve/index_controllerLHR-E217CD00_Right" : "valve/index_controllerLHR-E217CD00_Left");
+  uint64_t supportedButtons = 0xFFFFFFFFFFFFFFFFULL;
+  vr::VRProperties()->SetUint64Property(m_props, vr::Prop_SupportedButtons_Uint64, supportedButtons);
+  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis0Type_Int32, vr::k_eControllerAxis_Joystick);
+  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ControllerType_String, "knuckles");
+  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_InputProfilePath_String, "{indexcontroller}/input/index_controller_profile.json");
+
+  // Inputs | These interact without the specified input profile so the paths need to be equivalent //TODO:Update all of these to Index Knuckles and make the touchpad logic elsewhere?
 
   // System Info
   vr::VRDriverInput()->CreateBooleanComponent(m_props, "/input/system/click", &m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK]);
