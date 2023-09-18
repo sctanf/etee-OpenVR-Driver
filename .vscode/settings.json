@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "memory": "cpp",
+        "cmath": "cpp",
+        "valarray": "cpp"
+    }
+}
