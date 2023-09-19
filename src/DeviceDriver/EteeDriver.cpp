@@ -56,7 +56,7 @@ vr::EVRInitError EteeDeviceDriver::Activate(uint32_t unObjectId) {
   vr::VRProperties()->SetInt32Property(m_props, vr::Prop_DeviceClass_Int32, (int32_t)vr::TrackedDeviceClass_Controller);
   vr::VRProperties()->SetBoolProperty(m_props, vr::Prop_Identifiable_Bool, true);
 //  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis0Type_Int32, vr::k_eControllerAxis_TrackPad); // Overridden
-//  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis1Type_Int32, vr::k_eControllerAxis_Trigger);
+  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis1Type_Int32, vr::k_eControllerAxis_Trigger);
   vr::VRProperties()->SetInt32Property(
       m_props, vr::Prop_ControllerRoleHint_Int32, IsRightHand() ? vr::TrackedControllerRole_RightHand : vr::TrackedControllerRole_LeftHand);
   vr::VRProperties()->SetInt32Property(m_props, vr::Prop_ControllerHandSelectionPriority_Int32, (int32_t)7002);
@@ -69,7 +69,7 @@ vr::EVRInitError EteeDeviceDriver::Activate(uint32_t unObjectId) {
 //      "etee");  // anything other than TG0 (what the manufacturer of the tracker is, as we use this to get the pose)
   vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ResourceRoot_String, "etee_controller");
 //  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_InputProfilePath_String, "{etee}/input/etee_controller_profile.json"); // Overridden
-//  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis2Type_Int32, vr::k_eControllerAxis_Trigger);
+  vr::VRProperties()->SetInt32Property(m_props, vr::Prop_Axis2Type_Int32, vr::k_eControllerAxis_Trigger);
 //  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_ControllerType_String, "etee_controller"); // Overridden
 
 //  vr::VRProperties()->SetStringProperty(m_props, vr::Prop_TrackingSystemName_String, "indexcontroller");
@@ -89,6 +89,7 @@ vr::EVRInitError EteeDeviceDriver::Activate(uint32_t unObjectId) {
 
   // System Info
   vr::VRDriverInput()->CreateBooleanComponent(m_props, "/input/system/click", &m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK]);
+  vr::VRDriverInput()->CreateBooleanComponent(m_props, "/input/system/touch", &m_inputComponentHandles[ComponentIndex::PROXIMITY_TOUCH]);
   vr::VRDriverInput()->CreateBooleanComponent(m_props, "/input/tracker_connection/click", &m_inputComponentHandles[ComponentIndex::TRACKERCONNECTION_CLICK]);
 
   // Buttons
@@ -377,6 +378,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   // System
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick || system_click, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], system_click, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PROXIMITY_TOUCH], data.proximity.touch, 0);
 
   // Fingers
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::INDEX_PULL], data.fingers[1].pull, 0);
