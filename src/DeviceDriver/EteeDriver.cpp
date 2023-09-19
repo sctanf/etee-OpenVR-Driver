@@ -222,17 +222,17 @@ void EteeDeviceDriver::StartDevice() {
 
 void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   // System Info
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick, 0);
+//  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick, 0);
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::TRACKERCONNECTION_CLICK], data.system.trackerConnection, 0);
 
   // Touchpad Logic
   #define DEG_TO_RAD (3.1415926535897932384626433832795028841971693993751058209749445923078164062/180)
-  #define TOUCHPAD_ACTIVE_FORCE 0.02
-  #define TOUCHPAD_INACTIVE_FORCE 0.01
-  #define TOUCHPAD_CLICK_FORCE 0.10
-  #define TOUCHPAD_RELEASE_FORCE 0.05
-  #define TRACKPAD_LOWER_ANGLE 310
-  #define THUMBSTICK_THRESHOLD_VALUE (1/3)
+  #define TOUCHPAD_ACTIVE_FORCE 0.02 // Limit your input to the current zone and/or enables thumbstick x/y
+  #define TOUCHPAD_INACTIVE_FORCE 0.01 // Deactivate zone limit and/or thumbstick x/y
+  #define TOUCHPAD_CLICK_FORCE 0.10 // Click activation
+  #define TOUCHPAD_RELEASE_FORCE 0.05 // Click deactivation
+  #define THUMBSTICK_THRESHOLD_VALUE (1/3) // Range from center that should be considered the thumbstick zone
+  // Reference right hand, angle from positive x axis
   #define BUTTONS_START_ANGLE 130
   #define BUTTONS_B_TO_BOTH 170
   #define BUTTONS_BOTH_TO_A 190
@@ -242,7 +242,8 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define TRACKPAD_LOWER_ANGLE 310
 
   float touchAngle = atan2(data.thumbpad.y, IsRightHand() ? data.thumbpad.x : -data.thumbpad.x);
-  float touchValue = data.thumbpad.touch ? sqrt(pow(data.thumbpad.x, 2) + pow(data.thumbpad.y, 2)) : 0;
+  float touchValue = data.thumbpad.touch ? sqrt(pow(data.thumbpad.x, 2) + pow(data.thumbpad.y, 2)) : 0; // Distance from center of touchpad
+  bool touchClick;
 
   float thumbstick_x = 0;
   float thumbstick_y = 0;
@@ -292,7 +293,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     m_touchState ^= m_touchState & 16;
   }
 
-  bool touchClick = (m_touchState & 16) == 16 ? true : false;
+  touchClick = (m_touchState & 16) == 16 ? true : false;
 
   // Force active zone
   switch ((m_touchState >> 1) & 15) { // Limit values for different ranges
@@ -340,7 +341,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     button_b_touch = true;
     button_b_click = touchClick;
   }
-  else if (touchAngle > BUTTONS_B_TO_BOTH * DEG_TO_RAD && touchAngle < BUTTONS_BOTH_TO_A * DEG_TO_RAD) { // A and B
+  else if (touchAngle >= BUTTONS_B_TO_BOTH * DEG_TO_RAD && touchAngle <= BUTTONS_BOTH_TO_A * DEG_TO_RAD) { // A and B
     button_a_touch = true;
     button_a_click = touchClick;
     button_b_touch = true;
@@ -374,6 +375,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_B_VALUE], button_b_touch, 0);
 
   // System
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick || system_click, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], system_click, 0);
 
   // Fingers

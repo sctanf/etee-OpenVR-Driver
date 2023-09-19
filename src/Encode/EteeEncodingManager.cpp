@@ -73,7 +73,7 @@ VRCommInputData_t EteeEncodingManager::DecodeInputPacket(const std::string& in) 
       static_cast<int>(InputSerialBytePosition::kBatteryChargeComplete),
       static_cast<int>(InputSerialBitPosition::kBatteryChargeComplete),
       static_cast<int>(InputSerialBitLength::kBatteryChargeComplete));
-  commData.system.systemClick = GetDataUnsigned<bool>(
+  commData.system.systemClick = GetDataUnsigned<bool>( // why are we getting systemClick twice??
       c_input,
       static_cast<int>(InputSerialBytePosition::kSystemButton),
       static_cast<int>(InputSerialBitPosition::kSystemButton),
