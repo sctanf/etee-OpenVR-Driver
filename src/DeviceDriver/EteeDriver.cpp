@@ -288,7 +288,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   if (data.thumbpad.force > TOUCHPAD_CLICK_FORCE && (m_touchState & 16) == 0) { // Click latch
     m_touchState |= 16;
   }
-  else if (data.thumbpad.force < TOUCHPAD_RELEASE_FORCE && (m_touchState & 16) == 0) {
+  else if (data.thumbpad.force < TOUCHPAD_RELEASE_FORCE && (m_touchState & 16) == 16) {
     m_touchState ^= m_touchState & 16;
   }
 
