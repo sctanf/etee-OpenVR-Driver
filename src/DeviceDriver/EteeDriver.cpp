@@ -297,7 +297,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   touchClick = (m_touchState & 16) == 16 ? true : false;
 
   // Force active zone
-  switch ((m_touchState >> 1) & 15) { // Limit values for different ranges
+  switch ((m_touchState >> 1) & 7) { // Limit values for different ranges
     case 2: // Trackpad
       touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
       touchAngle = touchAngle < 180 ? // Clamp to Trackpad range
