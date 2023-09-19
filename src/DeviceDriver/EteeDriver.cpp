@@ -403,7 +403,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
 
   // Grip gesture
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_VALUE], data.gesture.gripPull, 0);
-  vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_FORCE], data.gesture.gripForce, 0);
+  vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_FORCE], data.gesture.gripForce, 0); // Does this work with i.e. 3 or 2 fingers?
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_TOUCH], data.gesture.gripTouch, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_CLICK], data.gesture.gripClick, 0);
 
