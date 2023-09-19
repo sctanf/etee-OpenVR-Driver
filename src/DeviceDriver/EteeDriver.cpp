@@ -223,7 +223,7 @@ void EteeDeviceDriver::StartDevice() {
 
 void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   // System Info
-//  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick, 0);
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::TRACKERCONNECTION_CLICK], data.system.trackerConnection, 0);
 
   // Touchpad Logic
@@ -234,11 +234,6 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define TOUCHPAD_RELEASE_FORCE 0.05 // Click deactivation
   #define THUMBSTICK_THRESHOLD_VALUE (1/3) // Range from center that should be considered the thumbstick zone
   // Reference right hand, angle from positive x axis
-  #define BUTTONS_START_ANGLE 130
-  #define BUTTONS_B_TO_BOTH 170
-  #define BUTTONS_BOTH_TO_A 190
-  #define BUTTONS_END_ANGLE 230
-  #define SYSTEM_END_ANGLE 270
   #define TRACKPAD_UPPER_ANGLE 50
   #define TRACKPAD_LOWER_ANGLE 310
 
@@ -256,14 +251,6 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   bool trackpad_touch = false;
   float trackpad_force = 0;
 
-  bool button_a_click = false;
-  bool button_a_touch = false;
-
-  bool button_b_click = false;
-  bool button_b_touch = false;
-
-  bool system_click = false;
-
   // touchState Touched zone
   if (data.thumbpad.force > TOUCHPAD_ACTIVE_FORCE && (m_touchState & 1) == 0) { // Lock to zone on press
     if (touchValue < THUMBSTICK_THRESHOLD_VALUE) { // Thumbstick
@@ -272,14 +259,9 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     else if (touchAngle < TRACKPAD_UPPER_ANGLE * DEG_TO_RAD || touchAngle > TRACKPAD_LOWER_ANGLE * DEG_TO_RAD) { // Trackpad
       m_touchState |= 2 << 1 | 1;
     }
-    else if (touchAngle > BUTTONS_START_ANGLE * DEG_TO_RAD && touchAngle < BUTTONS_END_ANGLE * DEG_TO_RAD) { // Buttons
-      m_touchState |= 3 << 1 | 1;
-    }
-    else if (touchAngle > BUTTONS_END_ANGLE * DEG_TO_RAD && touchAngle < SYSTEM_END_ANGLE * DEG_TO_RAD) { // System
-      m_touchState |= 4 << 1 | 1;
-    }
-    else { // Invalid zone
-      m_touchState |= 1;
+    else { // Fallback to Thumbstick
+      //m_touchState |= 1;
+      m_touchState |= 1 << 1 | 1;
     }
   }
   else if (data.thumbpad.force < TOUCHPAD_INACTIVE_FORCE && (m_touchState & 1) == 1) { // Unlock zone
@@ -297,25 +279,12 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   touchClick = (m_touchState & 16) == 16 ? true : false;
 
   // Force active zone
-  switch ((m_touchState >> 1) & 15) { // Limit values for different ranges
-    case 2: // Trackpad
-      touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
-      touchAngle = touchAngle < 180 ? // Clamp to Trackpad range
-        (touchAngle > TRACKPAD_UPPER_ANGLE ? TRACKPAD_UPPER_ANGLE : touchAngle)
-        : (touchAngle < TRACKPAD_LOWER_ANGLE ? TRACKPAD_LOWER_ANGLE : touchAngle);
-      break;
-    case 3: // Buttons
-      touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
-      touchAngle = touchAngle > BUTTONS_START_ANGLE ? // Clamp to Buttons range
-        (touchAngle < BUTTONS_END_ANGLE ? touchValue : BUTTONS_END_ANGLE)
-        : BUTTONS_START_ANGLE;
-      break;
-    case 4: // System
-      touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
-      touchAngle = touchAngle > BUTTONS_END_ANGLE ? // Clamp to System range
-        (touchAngle < SYSTEM_END_ANGLE ? touchValue : SYSTEM_END_ANGLE)
-        : BUTTONS_END_ANGLE;
-      break;
+  if ((m_touchState & 15) == (2 << 1 | 1)) { // Limit values for different ranges
+    // Trackpad
+    touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
+    touchAngle = touchAngle < 180 ? // Clamp to Trackpad range
+      (touchAngle > TRACKPAD_UPPER_ANGLE ? TRACKPAD_UPPER_ANGLE : touchAngle)
+      : (touchAngle < TRACKPAD_LOWER_ANGLE ? TRACKPAD_LOWER_ANGLE : touchAngle);
   }
 
   // Set values for active zone
@@ -325,10 +294,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     thumbstick_click = touchClick;
     thumbstick_touch = true;
   }
-  else if (touchValue < THUMBSTICK_THRESHOLD_VALUE) { // Thumbstick, not active
-    thumbstick_touch = data.thumbpad.touch;
-  }
-  else if (touchAngle <= TRACKPAD_UPPER_ANGLE * DEG_TO_RAD || touchAngle >= TRACKPAD_LOWER_ANGLE * DEG_TO_RAD) { // Trackpad
+  else if (touchValue >= THUMBSTICK_THRESHOLD_VALUE && (touchAngle <= TRACKPAD_UPPER_ANGLE * DEG_TO_RAD || touchAngle >= TRACKPAD_LOWER_ANGLE * DEG_TO_RAD)) { // Trackpad
     float trackValue = IsRightHand() ? touchValue : -touchValue; // (THUMBSTICK_THRESHOLD_VALUE, 1)
     trackpad_x = (trackValue - THUMBSTICK_THRESHOLD_VALUE) / (1 - THUMBSTICK_THRESHOLD_VALUE) * 2 - 1; // Normalize to (-1, 1) range
     float trackAngle = (touchAngle >= 0 ? // Convert touchAngle to (0, total of TRACKPAD_ANGLE)
@@ -338,22 +304,8 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     trackpad_touch = true;
     trackpad_force = data.thumbpad.force;
   }
-  else if (touchAngle > BUTTONS_START_ANGLE * DEG_TO_RAD && touchAngle < BUTTONS_B_TO_BOTH * DEG_TO_RAD) { // B only
-    button_b_touch = true;
-    button_b_click = touchClick;
-  }
-  else if (touchAngle >= BUTTONS_B_TO_BOTH * DEG_TO_RAD && touchAngle <= BUTTONS_BOTH_TO_A * DEG_TO_RAD) { // A and B
-    button_a_touch = true;
-    button_a_click = touchClick;
-    button_b_touch = true;
-    button_b_click = touchClick;
-  }
-  else if (touchAngle > BUTTONS_BOTH_TO_A * DEG_TO_RAD && touchAngle < BUTTONS_END_ANGLE * DEG_TO_RAD) { // A only
-    button_a_touch = true;
-    button_a_click = touchClick;
-  }
-  else if (touchAngle > BUTTONS_END_ANGLE * DEG_TO_RAD && touchAngle < SYSTEM_END_ANGLE * DEG_TO_RAD) { // System
-    system_click = touchClick;
+  else { // Thumbstick, not active
+    thumbstick_touch = data.thumbpad.touch;
   }
 
   // Thumbstick
@@ -369,15 +321,13 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::SLIDER_CLICK], trackpad_force, 0);
 
   // Buttons
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_A_CLICK], button_a_click, 0);
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_A_VALUE], button_a_touch, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_A_CLICK], data.slider.downTouch, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_A_VALUE], data.slider.downTouch, 0);
 
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_B_CLICK], button_b_click, 0);
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_B_VALUE], button_b_touch, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_B_CLICK], data.slider.upTouch, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINCH_B_VALUE], data.slider.upTouch, 0);
 
   // System
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick || system_click, 0);
-//  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], system_click, 0);
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PROXIMITY_TOUCH], data.proximity.touch, 0);
 
   // Fingers
