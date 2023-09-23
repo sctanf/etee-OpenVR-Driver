@@ -156,7 +156,9 @@ class EteeDeviceDriver : public IDeviceDriver {
   std::mutex m_inputMutex;
   VRCommInputData_t m_lastInput;
   
-  std::atomic<uint32_t> m_touchState;
+  std::atomic<uint16_t> m_touchState;
+  std::atomic<int16_t> m_touchStatePadX;
+  std::atomic<int16_t> m_touchStatePadY;
 
   std::function<void(const DeviceEvent& deviceEvent)> m_deviceEventCallback;
 

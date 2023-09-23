@@ -232,6 +232,8 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define TOUCHPAD_INACTIVE_FORCE 0.01 // Deactivate zone limit and/or thumbstick x/y
   #define TOUCHPAD_CLICK_FORCE 0.10 // Click activation
   #define TOUCHPAD_RELEASE_FORCE 0.05 // Click deactivation
+  #define THUMBSTICK_DEADZONE_INT 21 // Range to detect as center
+  #define THUMBSTICK_RANGE_INT 105 // Effective range for thumbstick
   #define THUMBSTICK_THRESHOLD_VALUE (1/3) // Range from center that should be considered the thumbstick zone
   // Reference right hand, angle from positive x axis
   #define BUTTONS_START_ANGLE 130
@@ -268,6 +270,12 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   if (data.thumbpad.force > TOUCHPAD_ACTIVE_FORCE && (m_touchState & 1) == 0) { // Lock to zone on press
     if (touchValue < THUMBSTICK_THRESHOLD_VALUE) { // Thumbstick
       m_touchState |= 1 << 1 | 1;
+      // Record the current pad value to use as center
+      int pad_x = roundf(data.thumbpad.x * 126) + THUMBSTICK_DEADZONE_INT;
+      int pad_y = roundf(data.thumbpad.y * 126) + THUMBSTICK_DEADZONE_INT;
+      // Clamp to deadzone limit
+      m_touchStatePadX = pad_x < -THUMBSTICK_DEADZONE_INT ? -THUMBSTICK_DEADZONE_INT : (pad_x > THUMBSTICK_DEADZONE_INT ? THUMBSTICK_DEADZONE_INT : pad_x);
+      m_touchStatePadY = pad_y < -THUMBSTICK_DEADZONE_INT ? -THUMBSTICK_DEADZONE_INT : (pad_y > THUMBSTICK_DEADZONE_INT ? THUMBSTICK_DEADZONE_INT : pad_y);
     }
     else if (touchAngle < TRACKPAD_UPPER_ANGLE * DEG_TO_RAD || touchAngle > TRACKPAD_LOWER_ANGLE * DEG_TO_RAD) { // Trackpad
       m_touchState |= 2 << 1 | 1;
@@ -320,8 +328,16 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
 
   // Set values for active zone
   if ((m_touchState & 15) == (1 << 1 | 1)) { // Thumbstick
-    thumbstick_x = data.thumbpad.x;
-    thumbstick_y = data.thumbpad.y;
+    //thumbstick_x = data.thumbpad.x;
+    //thumbstick_y = data.thumbpad.y;
+    // Apply center offset
+    int pad_x = roundf(data.thumbpad.x * 126) - m_touchStatePadX;
+    int pad_y = roundf(data.thumbpad.y * 126) - m_touchStatePadY;
+    // Clamp to range limit
+    pad_x = pad_x < -THUMBSTICK_RANGE_INT ? -THUMBSTICK_RANGE_INT : (pad_x > THUMBSTICK_RANGE_INT ? THUMBSTICK_RANGE_INT : pad_x);
+    pad_y = pad_y < -THUMBSTICK_RANGE_INT ? -THUMBSTICK_RANGE_INT : (pad_y > THUMBSTICK_RANGE_INT ? THUMBSTICK_RANGE_INT : pad_y);
+    thumbstick_x = (float)pad_x / THUMBSTICK_RANGE_INT;
+    thumbstick_y = (float)pad_y / THUMBSTICK_RANGE_INT;
     thumbstick_click = touchClick;
     thumbstick_touch = true;
   }
