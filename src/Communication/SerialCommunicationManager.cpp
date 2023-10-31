@@ -133,7 +133,7 @@ bool SerialCommunicationManager::Connect() {
   m_hSerial = CreateFile(m_port.c_str(), GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
   // Set the size of the buffers. 100 bytes holds 4 controller SteamVR packets, I guess it could be smaller if needed, but this is fine for now.
-  if (!SetupComm(m_hSerial, 100, 300)) {
+  if (!SetupComm(m_hSerial, 30, 300)) {
     LogError("Failed to setup comm");
 
     return false;
