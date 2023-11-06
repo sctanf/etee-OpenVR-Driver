@@ -230,10 +230,10 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062
   #define DEG_TO_RAD (PI/180)
   #define RAD_TO_DEG (180/PI)
-  #define TOUCHPAD_ACTIVE_FORCE 0.15 // Limit your input to the current zone and/or enables thumbstick x/y
-  #define TOUCHPAD_INACTIVE_FORCE 0.10 // Deactivate zone limit and/or thumbstick x/y
-  #define TOUCHPAD_CLICK_FORCE 0.50 // Click activation
-  #define TOUCHPAD_RELEASE_FORCE 0.45 // Click deactivation
+  #define TOUCHPAD_ACTIVE_FORCE 0.02 // Limit your input to the current zone and/or enables thumbstick x/y
+  #define TOUCHPAD_INACTIVE_FORCE 0.01 // Deactivate zone limit and/or thumbstick x/y
+  #define TOUCHPAD_CLICK_FORCE 0.99 // Click activation
+  #define TOUCHPAD_RELEASE_FORCE 0.98 // Click deactivation
   #define THUMBSTICK_DEADZONE_INT 50 // Range to detect as center
   #define THUMBSTICK_RANGE_INT 70 // Effective range for thumbstick
   #define THUMBSTICK_THRESHOLD_VALUE 0.7 // Range from center that should be considered the thumbstick zone
@@ -246,8 +246,9 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define TRACKPAD_UPPER_ANGLE 50
   #define TRACKPAD_LOWER_ANGLE 310
 
-  bool touchTouch = data.thumbpad.force > 0.05;
- // bool touchTouch = data.thumbpad.touch;
+  bool touchTouch = data.thumbpad.value > 0.5;
+//  bool touchTouch = data.thumbpad.force > 0.05;
+//  bool touchTouch = data.thumbpad.touch;
   float touchAngle = touchTouch ? atan2(data.thumbpad.y, IsRightHand() ? data.thumbpad.x : -data.thumbpad.x) : 0;
   touchAngle = touchAngle < 0 ? 2 * PI + touchAngle : touchAngle;
   touchAngle *= RAD_TO_DEG;

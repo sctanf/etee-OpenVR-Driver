@@ -108,7 +108,7 @@ VRCommInputData_t EteeEncodingManager::DecodeInputPacket(const std::string& in) 
       static_cast<int>(InputSerialBitPosition::kTrackpadClicked),
       static_cast<int>(InputSerialBitLength::kTrackpadClicked));
 
-  // commData.thumbpad.value = thumbpadPull;
+  commData.thumbpad.value = thumbpadPull;
   commData.thumbpad.force = thumbpadForce;
   commData.thumbpad.touch = thumbpadTouch ? thumbpadTouch : thumbpadClick;  // hardcoded for touch = true when click = true
   commData.thumbpad.click = thumbpadClick;
