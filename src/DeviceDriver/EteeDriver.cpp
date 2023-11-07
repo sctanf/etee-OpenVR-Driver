@@ -234,6 +234,12 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define TOUCHPAD_INACTIVE_FORCE 0.01 // Deactivate zone limit and/or thumbstick x/y
   #define TOUCHPAD_CLICK_FORCE 0.95 // Click activation
   #define TOUCHPAD_RELEASE_FORCE 0.90 // Click deactivation
+  #define AB_CLICK_FORCE 0.85 // Click activation
+  #define AB_RELEASE_FORCE 0.80 // Click deactivation
+  #define BOTH_CLICK_FORCE 0.95 // Click activation
+  #define BOTH_RELEASE_FORCE 0.90 // Click deactivation
+  #define THUMBSTICK_CLICK_FORCE 0.99 // Click activation
+  #define THUMBSTICK_RELEASE_FORCE 0.98 // Click deactivation
   #define THUMBSTICK_DEADZONE_INT 50 // Range to detect as center
   #define THUMBSTICK_RANGE_INT 70 // Effective range for thumbstick
   #define THUMBSTICK_THRESHOLD_VALUE 0.7 // Range from center that should be considered the thumbstick zone
@@ -301,36 +307,45 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
     m_touchState ^= m_touchState & 15;
   }
 
-  // touchState Clicked
-  if (data.thumbpad.force > TOUCHPAD_CLICK_FORCE && (m_touchState & 16) == 0) { // Click latch
-    m_touchState |= 16;
-  }
-  else if (data.thumbpad.force < TOUCHPAD_RELEASE_FORCE && (m_touchState & 16) == 16) {
-    m_touchState ^= m_touchState & 16;
-  }
-
-  touchClick = (m_touchState & 16) == 16 ? true : false;
+  float layer_click_force = THUMBSTICK_CLICK_FORCE;
+  float layer_release_force = THUMBSTICK_RELEASE_FORCE;
 
   // Force active zone
   switch ((m_touchState >> 1) & 7) { // Limit values for different ranges
     case 2: // Trackpad
+      layer_click_force = TOUCHPAD_CLICK_FORCE;
+      layer_release_force = TOUCHPAD_RELEASE_FORCE;
       touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
       touchAngle = touchAngle < 180 ? // Clamp to Trackpad range
         (touchAngle > TRACKPAD_UPPER_ANGLE ? TRACKPAD_UPPER_ANGLE : touchAngle)
         : (touchAngle < TRACKPAD_LOWER_ANGLE ? TRACKPAD_LOWER_ANGLE : touchAngle);
       break;
     case 3: // Buttons
+      layer_click_force = BOTH_CLICK_FORCE;
+      layer_release_force = BOTH_RELEASE_FORCE;
       touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
       touchAngle = touchAngle > BUTTONS_START_ANGLE ? // Clamp to Buttons range
         (touchAngle < BUTTONS_END_ANGLE ? touchAngle : BUTTONS_END_ANGLE)
         : BUTTONS_START_ANGLE;
       break;
     case 4: // System
+      layer_click_force = AB_CLICK_FORCE;
+      layer_release_force = AB_RELEASE_FORCE;
       touchValue = touchValue < THUMBSTICK_THRESHOLD_VALUE ? THUMBSTICK_THRESHOLD_VALUE : touchValue;
       touchAngle = SYSTEM_END_ANGLE; // Clamp to System range
     default:
       break;
   }
+
+  // touchState Clicked
+  if (data.thumbpad.force > layer_click_force && (m_touchState & 16) == 0) { // Click latch
+    m_touchState |= 16;
+  }
+  else if (data.thumbpad.force < layer_release_force && (m_touchState & 16) == 16) {
+    m_touchState ^= m_touchState & 16;
+  }
+
+  touchClick = (m_touchState & 16) == 16 ? true : false;
 
   // Set values for active zone
   if ((m_touchState & 15) == (1 << 1 | 1)) { // Thumbstick
@@ -424,11 +439,27 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINKY_CLICK], data.fingers[4].click, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PINKY_TOUCH], data.fingers[4].touch, 0);
 
+float gripPull = 0;
+float gripForce = 0;
+bool gripTouch = false;
+for (int i = 1; i < 5; i++) {
+  if (data.fingers[i].pull > gripPull) gripPull = data.fingers[i].pull;
+  if (data.fingers[i].force > gripForce) gripForce = data.fingers[i].force;
+  gripTouch |= data.fingers[i].touch;
+  gripTouch |= data.fingers[i].click;
+}
+
   // Grip gesture
+  vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_VALUE], gripPull, 0);
+  vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_FORCE], gripForce, 0); // Does this work with i.e. 3 or 2 fingers?
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_TOUCH], gripTouch, 0);
+//  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_CLICK], data.gesture.gripClick, 0);
+/*
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_VALUE], data.gesture.gripPull, 0);
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_FORCE], data.gesture.gripForce, 0); // Does this work with i.e. 3 or 2 fingers?
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_TOUCH], data.gesture.gripTouch || data.gesture.gripClick, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_CLICK], data.gesture.gripClick, 0);
+*/
 
   // Battery percentage
   vr::VRProperties()->SetFloatProperty(m_props, vr::Prop_DeviceBatteryPercentage_Float, data.system.battery);
