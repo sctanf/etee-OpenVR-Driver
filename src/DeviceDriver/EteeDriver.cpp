@@ -232,8 +232,8 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   #define RAD_TO_DEG (180/PI)
   #define TOUCHPAD_ACTIVE_FORCE 0.02 // Limit your input to the current zone and/or enables thumbstick x/y
   #define TOUCHPAD_INACTIVE_FORCE 0.01 // Deactivate zone limit and/or thumbstick x/y
-  #define TOUCHPAD_CLICK_FORCE 0.99 // Click activation
-  #define TOUCHPAD_RELEASE_FORCE 0.98 // Click deactivation
+  #define TOUCHPAD_CLICK_FORCE 0.95 // Click activation
+  #define TOUCHPAD_RELEASE_FORCE 0.90 // Click deactivation
   #define THUMBSTICK_DEADZONE_INT 50 // Range to detect as center
   #define THUMBSTICK_RANGE_INT 70 // Effective range for thumbstick
   #define THUMBSTICK_THRESHOLD_VALUE 0.7 // Range from center that should be considered the thumbstick zone
@@ -401,7 +401,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   // System
   vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], data.system.systemClick || system_click, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::SYSTEM_CLICK], system_click, 0);
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PROXIMITY_TOUCH], data.proximity.touch, 0);
+//  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::PROXIMITY_TOUCH], data.proximity.touch, 0);
 
   // Fingers
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::INDEX_PULL], data.fingers[1].pull, 0);
@@ -427,7 +427,7 @@ void EteeDeviceDriver::OnInputUpdate(VRCommInputData_t data) {
   // Grip gesture
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_VALUE], data.gesture.gripPull, 0);
   vr::VRDriverInput()->UpdateScalarComponent(m_inputComponentHandles[ComponentIndex::GRIP_FORCE], data.gesture.gripForce, 0); // Does this work with i.e. 3 or 2 fingers?
-  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_TOUCH], data.gesture.gripTouch, 0);
+  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_TOUCH], data.gesture.gripTouch || data.gesture.gripClick, 0);
 //  vr::VRDriverInput()->UpdateBooleanComponent(m_inputComponentHandles[ComponentIndex::GRIP_CLICK], data.gesture.gripClick, 0);
 
   // Battery percentage
